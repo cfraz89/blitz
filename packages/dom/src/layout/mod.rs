@@ -151,7 +151,15 @@ impl LayoutPartialTree for Document {
                                 return taffy::LayoutOutput::HIDDEN;
                             }
                             Some("checkbox") => {
-                                return compute_leaf_layout(
+                                let padding_top = node.style.padding.top.resolve_or_zero(None);
+                                let border_top = node.style.border.top.resolve_or_zero(None);
+                                let margin_top = node.style.margin.top.resolve_or_zero(None);
+                                let height = node
+                                    .style
+                                    .size
+                                    .height
+                                    .resolve_or_zero(inputs.parent_size.height);
+                                let mut layout = compute_leaf_layout(
                                     inputs,
                                     &node.style,
                                     |_known_size, _available_space| {
@@ -160,11 +168,6 @@ impl LayoutPartialTree for Document {
                                             .size
                                             .width
                                             .resolve_or_zero(inputs.parent_size.width);
-                                        let height = node
-                                            .style
-                                            .size
-                                            .height
-                                            .resolve_or_zero(inputs.parent_size.height);
                                         let min_size = width.min(height);
                                         taffy::Size {
                                             width: min_size,
@@ -172,6 +175,10 @@ impl LayoutPartialTree for Document {
                                         }
                                     },
                                 );
+                                //Set baseline to the bottom of the checkbox
+                                layout.first_baselines.y =
+                                    Some(padding_top + border_top + margin_top + height);
+                                return layout;
                             }
                             _ => {}
                         }
